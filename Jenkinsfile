@@ -25,10 +25,11 @@ pipeline {
                 }
             }
         }
-    */    
+    */   
+        
         stage('Checkout') {
             steps {
-               git branch: 'main', url:'https://github.com/gastonbarbaccia/terraform-aws.git'
+               git branch: 'main', url:'https://github.com/gastonbarbaccia/jenkins_terraform_s3_demo.git'
             }
         }
         
@@ -73,11 +74,12 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 script {
-                    aws_access_key=$(sh -c 'echo $AWS_ACCESS_KEY')
-                    aws_secret_key=$(sh -c 'echo $AWS_SECRET_KEY')
-                    export AWS_ACCESS_KEY_ID=$aws_access_key
-                    export AWS_SECRET_ACCESS_KEY=$aws_secret_key
-                    sh 'terraform plan -out=tfplan'
+                    sh '''
+                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
+                    export AWS_REGION=${AWS_DEFAULT_REGION}
+                    terraform plan -out=tfplan
+                    '''
                 }
             }
         }
@@ -86,12 +88,10 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        if [ -f tfplan ]; then
-                            terraform apply -auto-approve tfplan
-                        else
-                            echo "Plan file not found!"
-                            exit 1
-                        fi
+                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
+                    export AWS_REGION=${AWS_DEFAULT_REGION}
+                    terraform apply -auto-approve "tfplan"
                     '''
                 }
             }
@@ -114,5 +114,5 @@ pipeline {
             cleanWs()
         }
     }
+    
 }
-
