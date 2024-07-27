@@ -2,12 +2,10 @@ pipeline {
     agent any
     
     environment {
-        VAULT_ADDR = credentials('vault-address') // URL de vault
-        VAULT_TOKEN = credentials('vault-token') // Credencial de acceso a vault
-        S3_BUCKET = "primer-proyecto-tf" // Nombre del bucket que queremos que utilice
-        AWS_DEFAULT_REGION = 'us-east-1' // Region en AWS donde se quiere desplegar los recursos
-        AWS_ACCESS_KEY_ID = credentials('aws_access_key') // Access key de AWS
-        AWS_SECRET_KEY_ID = credentials('aws_secret_key') // Secret key de AWS
+        S3_BUCKET = "primer-proyecto-tf"
+        AWS_DEFAULT_REGION = 'us-east-1'
+        AWS_ACCESS_KEY_ID = credentials('aws_access_key')
+        AWS_SECRET_KEY_ID = credentials('aws_secret_key')
     }
     
     stages {
@@ -16,7 +14,7 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/gastonbarbaccia/jenkins_terraform_s3_demo.git'
             }
         }
-
+        
         stage('Terraform Init') {
             steps {
                 script {
