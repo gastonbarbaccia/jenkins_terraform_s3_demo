@@ -56,30 +56,39 @@ pipeline {
                 }
             }
         }
-    /*    
-        stage('Check S3 File - Tfstate') {
+        
+       stage('Check S3 File - Tfstate') {
             steps {
                 script {
-                        def fileExists = sh(script: "aws s3 ls s3://${S3_BUCKET}/terraform.tfstate", returnStatus: true) == 0
+                    
+                    def fileExists = sh(script: """
+                            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                            export AWS_REGION=${AWS_REGION}
+                            aws s3 ls s3://${S3_BUCKET}/terraform.tfstate
+                        """, returnStatus: true) == 0
                         
-                        if (fileExists) {
-                            
-                            sh 'aws s3 cp s3://${S3_BUCKET}/terraform.tfstate ./terraform.tfstate'
-                        
-                        }
+                    if (fileExists) {
+                        sh """
+                            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
+                            export AWS_REGION=${AWS_DEFAULT_REGION}
+                            aws s3 cp s3://${S3_BUCKET}/terraform.tfstate ./terraform.tfstate
+                        """
+                    }
                 }
             }
         }
-    */   
+       
         stage('Terraform Plan') {
             steps {
                 script {
-                    sh '''
+                    sh """
                     export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
                     export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
                     export AWS_REGION=${AWS_DEFAULT_REGION}
                     terraform plan -out=tfplan
-                    '''
+                    """
                 }
             }
         }
@@ -87,32 +96,31 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 script {
-                    sh '''
+                    sh """
                     export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
                     export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
                     export AWS_REGION=${AWS_DEFAULT_REGION}
                     terraform apply -auto-approve "tfplan"
-                    '''
+                    """
                 }
             }
         }
         
-    /*    
+        
         stage('Terraform Tftate Upload') {
             steps {
                 script {
-                    sh 'aws s3 cp terraform.tfstate s3://${S3_BUCKET}'
+                    sh """
+                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}
+                    export AWS_REGION=${AWS_DEFAULT_REGION}
+                    aws s3 cp terraform.tfstate s3://${S3_BUCKET}
+                    """
                 }
             }
         }
-    */    
+        
 
-    }
-    
-    post {
-        always {
-            cleanWs()
-        }
     }
     
 }
