@@ -73,6 +73,10 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 script {
+                    aws_access_key=$(sh -c 'echo $AWS_ACCESS_KEY')
+                    aws_secret_key=$(sh -c 'echo $AWS_SECRET_KEY')
+                    export AWS_ACCESS_KEY_ID=$aws_access_key
+                    export AWS_SECRET_ACCESS_KEY=$aws_secret_key
                     sh 'terraform plan -out=tfplan'
                 }
             }
