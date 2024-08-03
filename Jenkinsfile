@@ -43,9 +43,28 @@ pipeline {
             steps {
                 script {
                     withEnv(["AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}", "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_KEY_ID}", "AWS_REGION=${AWS_DEFAULT_REGION}"]) {
-                        def fileExists = sh(script: 'aws s3 ls s3://${S3_BUCKET}/terraform.tfstate', returnStatus: true) == 0
-                        if (fileExists) {
-                            sh 'aws s3 cp s3://${S3_BUCKET}/terraform.tfstate ./terraform.tfstate'
+                        
+                        def bucketExists = sh(script: "aws s3api head-bucket --bucket ${S3_BUCKET} > /dev/null 2>&1 && echo 'Bucket exists' || echo 'Bucket does not exist'", returnStdout: true).trim()
+
+                        // Verifica la salida y actúa en consecuencia
+                        if (bucketExists == 'Bucket exists') {
+                            
+                            def fileExists = sh(script: 'aws s3 ls s3://${S3_BUCKET}/terraform.tfstate', returnStatus: true) == 0
+                            if (fileExists) {
+                                sh 'aws s3 cp s3://${S3_BUCKET}/terraform.tfstate ./terraform.tfstate'
+                            }
+
+                        } else {
+
+                            def createBucket = sh(script: 'aws s3api create-bucket --bucket ${S3_BUCKET} --region us-east-1', returnStatus: true)
+
+                                // Verifica si el comando fue exitoso
+                                if (createBucket == 0) {
+                                    echo "Bucket ${S3_BUCKET} created successfully in the region ${AWS_REGION}."
+                                } else {
+                                    error "Error in the creation of the Bucket ${S3_BUCKET}."
+                                }
+                            
                         }
                     }
                 }
